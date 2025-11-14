@@ -8,11 +8,31 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // CONTOH AJA NANTI APUS AJ PAS BACKENDNYA MULAI DIKERJAIN
+  final List<Map<String, String>> newsList = [
+    {
+      "title": "Berita 1",
+      "desc":
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut et massa mi. Aliquam in hendrerit urna.",
+    },
+    {
+      "title": "Berita 2",
+      "desc":
+          "Pellentesque sit amet sapien fringilla, mattis ligula consectetur, ultrices mauris.",
+    },
+    {
+      "title": "Berita 3",
+      "desc":
+          "Curabitur pellentesque nibh nibh, at maximus ante fermentum sit amet.",
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
+        physics: ClampingScrollPhysics(),
         child: Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 30),

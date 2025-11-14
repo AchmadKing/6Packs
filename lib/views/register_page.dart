@@ -27,7 +27,6 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
       body: Container(
         width: double.infinity,
-        height: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.07),
           border: Border.all(color: Colors.white.withOpacity(0.08)),

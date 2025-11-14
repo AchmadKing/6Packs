@@ -15,7 +15,7 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // ⬅️ Matikan tombol back otomatis
+        automaticallyImplyLeading: false,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -24,7 +24,7 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+          children: const [
             Text(
               "Pemula",
               style: TextStyle(fontSize: 15),
@@ -32,34 +32,34 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
             Icon(Icons.star, color: Colors.white, size: 20),
           ],
         ),
-        // Tambahkan tombol back secara manual
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        // Tambahkan padding di kanan biar balance
         actions: const [
-          SizedBox(width: kToolbarHeight), // lebar default tombol leading
+          SizedBox(width: kToolbarHeight),
         ],
       ),
-      body: Container(
+      body: SizedBox(
+        width: double.infinity,
         height: double.infinity,
         child: Stack(
           children: [
+            // background gradient
             Container(
               width: double.infinity,
               height: 200,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomLeft,
                   end: Alignment.topRight,
                   colors: [
                     Color(0xFF005078),
                     Color(0xFF0089CE),
-                    Color(0xFF3ABDFF)
-                  ]
+                    Color(0xFF3ABDFF),
+                  ],
                 ),
               ),
               child: Stack(
@@ -69,7 +69,7 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
                     top: 0,
                     bottom: 60,
                     child: ShaderMask(
-                      shaderCallback: (Rect bounds){
+                      shaderCallback: (Rect bounds) {
                         return const LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -77,19 +77,21 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
                             Colors.black,
                             Color.fromARGB(0, 0, 0, 0),
                           ],
-                          stops: [0.0,1]
+                          stops: [0.0, 1],
                         ).createShader(bounds);
                       },
                       blendMode: BlendMode.dstIn,
                       child: Image.asset(
                         "assets/images/pemula.png",
-                        fit: BoxFit.cover
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
+            // main content
             Positioned(
               left: 0,
               right: 0,
@@ -98,290 +100,209 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
               child: Container(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 0, 0, 0),
+                  color: Colors.black,
                   border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(30)),
                 ),
-                child: Column(
-                  spacing: 20,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.07),
-                        borderRadius: BorderRadius.circular(30)
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Jumlah Latihan",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                "5",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(1),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              )
-                            ],
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Estimasi Durasi",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                "15-20 menit",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(1),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              )
-                            ],
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Kalori",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                "103.0 kcal",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(1),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              )
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                child: SingleChildScrollView(
+                  physics: ClampingScrollPhysics(),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      spacing: 20,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 20),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.07),
-                            borderRadius: BorderRadius.circular(30)
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Jumlah Latihan",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Text(
+                                    "5",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Estimasi Durasi",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Text(
+                                    "15-20 menit",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Kalori",
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.5),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const Text(
+                                    "103.0 kcal",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // daftar latihan
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.07),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                           child: Column(
                             spacing: 30,
-                            mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 "Latihan",
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(1),
+                                  color: Colors.white,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               Column(
                                 spacing: 15,
-                                children: [
-                                  Container(
+                                children: List.generate(5, (index) {
+                                  return Ink(
                                     width: double.infinity,
                                     height: 100,
-                                    padding: EdgeInsets.all(20),
+                                    padding: const EdgeInsets.all(20),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
+                                      color: Colors.white.withOpacity(0.01),
                                       borderRadius: BorderRadius.circular(15),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Standard Plank",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(1),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
+                                    child: InkWell(
+                                      onTap: (){
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) {
+                                            return DraggableScrollableSheet(
+                                              initialChildSize: 0.4, // ukuran awal
+                                              minChildSize: 0.2,     // ditarik turun
+                                              maxChildSize: 1.0,     // ditarik full
+                                              builder: (context, scrollController) {
+                                                return Container(
+                                                  padding: EdgeInsets.all(20),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black,
+                                                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                                                    border: Border(top: BorderSide(color: Colors.white.withOpacity(0.07)))
+                                                  ),
+                                                  child: ListView(
+                                                    controller: scrollController,
+                                                    children: [
+                                                      Text("Halo! Ini bottom sheet yang bisa ditarik 😀"),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Standard Plank",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          "45 detik",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.5),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
+                                          Text(
+                                            "45 detik",
+                                            style: TextStyle(
+                                              color:
+                                                  Colors.white.withOpacity(0.5),
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 100,
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Crunches",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(1),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        Text(
-                                          "15-20 repetisi",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.5),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 100,
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Crunches",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(1),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        Text(
-                                          "15-20 repetisi",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.5),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 100,
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Crunches",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(1),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        Text(
-                                          "15-20 repetisi",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.5),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 100,
-                                    padding: EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Crunches",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(1),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        Text(
-                                          "15-20 repetisi",
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.5),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              )
+                                  );
+                                }),
+                              ),
                             ],
                           ),
-                      ),
+                        ),
+                        SizedBox(height: 160),
+                      ],
                     ),
-                  ],
-                )
+                  ),
+                ),
               ),
             ),
+
+            // tombol mulai
             Positioned(
               left: 0,
               right: 0,
               bottom: 20,
               child: Container(
                 height: 200,
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
@@ -389,31 +310,31 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
                       Colors.black,
                       Colors.transparent,
                     ],
-                  )
+                  ),
                 ),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: (){
+                    onPressed: () {
                       Navigator.pushNamed(context, '/latihan');
-                    }, 
+                    },
                     style: ElevatedButton.styleFrom(
                       shadowColor: Colors.transparent,
                       elevation: 0,
-                      backgroundColor: Color(0xFF620000)
+                      backgroundColor: const Color(0xFF620000),
                     ),
-                    child: Text(
+                    child: const Text(
                       "Mulai",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
-                    )
+                    ),
                   ),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),

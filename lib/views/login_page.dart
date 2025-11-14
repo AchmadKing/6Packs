@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: (){
-                        Navigator.pushNamed(context, '/homepage');
+                        Navigator.pushNamed(context, '/main');
                       }, 
                       style: ElevatedButton.styleFrom(
                         shadowColor: Colors.transparent,
