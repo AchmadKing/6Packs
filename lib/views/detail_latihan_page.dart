@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class DetailLatihanPage extends StatefulWidget {
   const DetailLatihanPage({super.key});
@@ -8,6 +9,28 @@ class DetailLatihanPage extends StatefulWidget {
 }
 
 class _DetailLatihanPageState extends State<DetailLatihanPage> {
+  late YoutubePlayerController ytController;
+
+  @override
+  void initState() {
+    super.initState();
+    ytController = YoutubePlayerController(
+      initialVideoId: YoutubePlayer.convertUrlToId(
+        "https://www.youtube.com/watch?v=F-nQ_KJgfCY",
+      )!,
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        mute: false,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    ytController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,36 +245,104 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
                                       borderRadius: BorderRadius.circular(15),
                                     ),
                                     child: InkWell(
-                                      onTap: (){
+                                      onTap: () {
                                         showModalBottomSheet(
                                           context: context,
                                           isScrollControlled: true,
                                           backgroundColor: Colors.transparent,
                                           builder: (context) {
+                                            double currentExtent = 0.4;
+
                                             return DraggableScrollableSheet(
-                                              initialChildSize: 0.4, // ukuran awal
-                                              minChildSize: 0.2,     // ditarik turun
-                                              maxChildSize: 1.0,     // ditarik full
+                                              initialChildSize: 0.4,
+                                              minChildSize: 0.2,
+                                              maxChildSize: 1.0,
                                               builder: (context, scrollController) {
-                                                return Container(
-                                                  padding: EdgeInsets.all(20),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black,
-                                                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                                                    border: Border(top: BorderSide(color: Colors.white.withOpacity(0.07)))
-                                                  ),
-                                                  child: ListView(
-                                                    controller: scrollController,
-                                                    children: [
-                                                      Text("Halo! Ini bottom sheet yang bisa ditarik 😀"),
-                                                    ],
+                                                return NotificationListener<DraggableScrollableNotification>(
+                                                  onNotification: (notif) {
+                                                    currentExtent = notif.extent;
+                                                    return true;
+                                                  },
+                                                  child: StatefulBuilder(
+                                                    builder: (context, setState) {
+                                                      return Container(
+                                                        padding: const EdgeInsets.all(20),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.black,
+                                                          borderRadius:
+                                                              const BorderRadius.vertical(top: Radius.circular(30)),
+                                                        ),
+                                                        child: Column(
+                                                          children: [
+                                                            // Drag Handle
+                                                            AnimatedOpacity(
+                                                              opacity: currentExtent < 0.95 ? 1 : 0,
+                                                              duration: const Duration(milliseconds: 200),
+                                                              child: Container(
+                                                                width: 40,
+                                                                height: 5,
+                                                                margin: const EdgeInsets.only(bottom: 15),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.white24,
+                                                                  borderRadius: BorderRadius.circular(10),
+                                                                ),
+                                                              ),
+                                                            ),
+
+                                                            Expanded(
+                                                              child: ListView(
+                                                                controller: scrollController,
+                                                                children: [
+                                                                  Column(
+                                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                                    children: [
+                                                                      Text(
+                                                                        "Standard Planks",
+                                                                        style: const TextStyle(
+                                                                            color: Colors.white,
+                                                                            fontSize: 20,
+                                                                            fontWeight: FontWeight.w700),
+                                                                      ),
+                                                                      Row(
+                                                                        children: [
+                                                                          Icon(Icons.flash_on, color: Colors.white, size: 16,),
+                                                                          Icon(Icons.flash_on, color: Colors.white, size: 16,),
+                                                                          Icon(Icons.flash_on, color: Colors.white, size: 16,)
+                                                                        ],
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                                  SizedBox(height: 20),
+                                                                  ClipRRect(
+                                                                    borderRadius: BorderRadius.circular(20),
+                                                                    child: YoutubePlayer(
+                                                                      controller: ytController,
+                                                                      showVideoProgressIndicator: true,
+                                                                    ),
+                                                                  ),
+                                                                  SizedBox(height: 50),
+                                                                  Text(
+                                                                    "Standard plank adalah latihan dasar untuk memperkuat otot inti (core) dengan cara mempertahankan posisi tubuh lurus seperti papan. Latihan ini tidak membutuhkan alat dan berfokus pada kestabilan tubuh. Plank membantu memperkuat otot perut, punggung bawah, bahu, dan panggul.",
+                                                                    textAlign: TextAlign.justify,
+                                                                    style: const TextStyle(
+                                                                        color: Colors.white,
+                                                                        fontSize: 15,
+                                                                        fontWeight: FontWeight.w500),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
                                                   ),
                                                 );
                                               },
                                             );
                                           },
                                         );
-
                                       },
                                       child: Column(
                                         crossAxisAlignment:
@@ -297,7 +388,7 @@ class _DetailLatihanPageState extends State<DetailLatihanPage> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 20,
+              bottom: 0,
               child: Container(
                 height: 200,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
