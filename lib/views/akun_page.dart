@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
+import '../services/notification_service.dart';
 
 class AkunPage extends StatefulWidget {
   const AkunPage({super.key});
@@ -18,6 +19,8 @@ class _AkunPageState extends State<AkunPage> {
   void initState() {
     super.initState();
     _loadUserData();
+    // Init service agar siap digunakan
+    NotificationService.init();
   }
 
   void _loadUserData() async {
@@ -27,6 +30,186 @@ class _AkunPageState extends State<AkunPage> {
       email = data['email'] ?? "email";
       imagePath = data['image'];
     });
+  }
+
+  // --- LOGIKA BARU: HANDLE KLIK MENU NOTIFIKASI ---
+  void _handleNotificationMenuClick() async {
+    // 1. Minta Izin Notifikasi Dulu (Popup OS akan muncul jika pertama kali)
+    await NotificationService.requestPermissions();
+
+    // 2. Setelah izin diproses (diizinkan/ditolak), buka Dialog Pengaturan
+    if (mounted) {
+      _showNotificationDialog();
+    }
+  }
+
+  // --- DIALOG PENGATURAN ---
+  void _showNotificationDialog() async {
+    final settings = await UserService.getNotificationSettings();
+    
+    bool isEnabled = settings['enabled'];
+    TimeOfDay selectedTime = TimeOfDay(hour: settings['hour'], minute: settings['minute']);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E1E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text(
+                "Pengingat Latihan",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Atur waktu untuk kami mengingatkan Anda berolahraga setiap hari.",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // PILIH JAM
+                  InkWell(
+                    onTap: isEnabled ? () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: selectedTime,
+                        builder: (context, child) {
+                          return Theme(
+                            data: ThemeData.dark().copyWith(
+                              colorScheme: const ColorScheme.dark(
+                                primary: Color(0xFF0089CE),
+                                onPrimary: Colors.white,
+                                surface: Color(0xFF2C2C2C),
+                                onSurface: Colors.white,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedTime = picked;
+                        });
+                      }
+                    } : null,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: isEnabled ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.03),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isEnabled ? const Color(0xFF0089CE) : Colors.transparent
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            selectedTime.format(context),
+                            style: TextStyle(
+                              fontSize: 32, 
+                              fontWeight: FontWeight.bold,
+                              color: isEnabled ? Colors.white : Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Icon(Icons.edit, color: isEnabled ? Colors.white70 : Colors.grey, size: 18)
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // TOGGLE SWITCH
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Aktifkan Notifikasi", style: TextStyle(color: Colors.white)),
+                      Switch(
+                        value: isEnabled,
+                        activeColor: const Color(0xFF0089CE),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            isEnabled = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    // SIMPAN DATA
+                    await UserService.saveNotificationSettings(
+                      isEnabled: isEnabled, 
+                      hour: selectedTime.hour, 
+                      minute: selectedTime.minute
+                    );
+
+                    // JADWALKAN NOTIFIKASI
+                    if (isEnabled) {
+                      await NotificationService.scheduleDailyNotification(
+                        hour: selectedTime.hour, 
+                        minute: selectedTime.minute
+                      );
+                    } else {
+                      await NotificationService.cancelNotification();
+                    }
+
+                    if (mounted) {
+                      Navigator.pop(ctx); // Tutup Dialog
+                      
+                      // TAMPILKAN SNACKBAR CUSTOM
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(
+                                isEnabled ? Icons.check_circle : Icons.notifications_off, 
+                                color: Colors.white
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(isEnabled 
+                                  ? "Pengingat diset jam ${selectedTime.format(context)}" 
+                                  : "Pengingat dimatikan"
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: isEnabled ? Colors.green : Colors.grey,
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        )
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0089CE)),
+                  child: const Text("Simpan", style: TextStyle(color: Colors.white)),
+                )
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -47,6 +230,7 @@ class _AkunPageState extends State<AkunPage> {
           padding: const EdgeInsets.all(30),
           child: Column(
             children: [
+              // CARD PROFIL
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -60,7 +244,6 @@ class _AkunPageState extends State<AkunPage> {
                   children: [
                     Row(
                       children: [
-                        // --- FOTO PROFIL ---
                         Container(
                           width: 50,
                           height: 50,
@@ -76,7 +259,6 @@ class _AkunPageState extends State<AkunPage> {
                                 : null,
                           ),
                         ),
-                        // --- NAMA & EMAIL ---
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -100,12 +282,9 @@ class _AkunPageState extends State<AkunPage> {
                         ),
                       ],
                     ),
-                    // --- TOMBOL EDIT ---
                     IconButton(
                       onPressed: () async {
-                        // Tunggu hasil dari halaman edit
                         final result = await Navigator.pushNamed(context, '/edit-akun');
-                        // Jika ada perubahan (true), refresh halaman ini
                         if (result == true) {
                           _loadUserData();
                         }
@@ -115,11 +294,11 @@ class _AkunPageState extends State<AkunPage> {
                   ],
                 ),
               ),
+              
               const SizedBox(height: 20),
               
-              // --- MENU GENERAL ---
+              // GENERAL MENU
               Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
@@ -140,11 +319,24 @@ class _AkunPageState extends State<AkunPage> {
                     ),
                     child: Column(
                       children: [
-                        _buildMenuItem(Icons.person_outline, "Capaian Saya"),
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/riwayat');
+                          },
+                          child: _buildMenuItem(Icons.person_outline, "Capaian Saya"),
+                        ),
+                        
                         const SizedBox(height: 20),
-                        _buildMenuItem(Icons.notifications_outlined, "Notifikasi"),
+                        
+                        // --- UPDATE: BUTTON NOTIFIKASI DENGAN LOGIKA IZIN ---
+                        InkWell(
+                          onTap: _handleNotificationMenuClick, // Panggil fungsi logic baru
+                          child: _buildMenuItem(Icons.notifications_outlined, "Notifikasi"),
+                        ),
+                        // ---------------------------------------------------
+
                         const SizedBox(height: 20),
-                        // Menu Ganti Password
+                        
                         InkWell(
                           onTap: () {
                             Navigator.pushNamed(context, '/password');
@@ -168,9 +360,10 @@ class _AkunPageState extends State<AkunPage> {
                   ),
                 ],
               ),
+              
               const SizedBox(height: 20),
 
-              // --- MENU SUPPORT ---
+              // SUPPORT MENU
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -200,9 +393,10 @@ class _AkunPageState extends State<AkunPage> {
                   ),
                 ],
               ),
+              
               const SizedBox(height: 20),
 
-              // --- TOMBOL LOGOUT ---
+              // LOGOUT
               Ink(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -211,7 +405,6 @@ class _AkunPageState extends State<AkunPage> {
                 ),
                 child: InkWell(
                   onTap: () {
-                    // Logika Logout: Kembali ke Login, hapus stack
                     Navigator.pushNamedAndRemoveUntil(context, '/masuk', (route) => false);
                   },
                   borderRadius: BorderRadius.circular(10),

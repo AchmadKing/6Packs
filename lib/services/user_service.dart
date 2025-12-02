@@ -4,81 +4,55 @@ import 'package:shared_preferences/shared_preferences.dart';
 class UserService {
   static const String _keyCurrentSession = 'current_session_user';
 
-  // --- HELPERS ---
-  // Mendapatkan username yang sedang login saat ini
   static Future<String?> _getCurrentUserKey() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyCurrentSession);
   }
 
-  // ==========================================
-  // 1. AUTHENTICATION (Login, Register, Cek User)
-  // ==========================================
-
-  // Cek apakah username sudah dipakai orang lain
+  // --- AUTH & USER DATA (SAMA SEPERTI SEBELUMNYA) ---
   static Future<bool> checkUserExists(String username, String email) async {
     final prefs = await SharedPreferences.getInstance();
-    // Cek apakah key (username) sudah ada di database lokal
     return prefs.containsKey(username);
   }
 
-  // Register User Baru
   static Future<void> register(String username, String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Struktur Data User (JSON)
     Map<String, dynamic> userData = {
       'email': email,
       'password': password,
       'image_path': null,
-      'is_question_done': false, // Belum isi kuesioner
-      'weekly_target': 3,        // Default target 3x seminggu
-      'workout_logs': [],        // Belum ada riwayat latihan
+      'is_question_done': false,
+      'weekly_target': 3,
+      'workout_logs': [], 
+      'workout_history': [], // LIST BARU: Untuk menyimpan detail histori
     };
-
-    // Simpan data dengan KUNCI = USERNAME
     await prefs.setString(username, jsonEncode(userData));
-
-    // Otomatis Login
     await prefs.setString(_keyCurrentSession, username);
   }
 
-  // Login User
   static Future<bool> login(String username, String password) async {
     final prefs = await SharedPreferences.getInstance();
-
-    // 1. Cek apakah username ada?
     String? jsonString = prefs.getString(username);
     if (jsonString == null) return false;
-
-    // 2. Cek password
-    Map<String, dynamic> userData = jsonDecode(jsonString);
-    if (userData['password'] == password) {
-      await prefs.setString(_keyCurrentSession, username);
-      return true;
-    }
+    try {
+      Map<String, dynamic> userData = jsonDecode(jsonString);
+      if (userData['password'] == password) {
+        await prefs.setString(_keyCurrentSession, username);
+        return true;
+      }
+    } catch (e) { return false; }
     return false;
   }
 
-  // Logout
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyCurrentSession);
   }
 
-  // ==========================================
-  // 2. USER DATA & PROFILE
-  // ==========================================
-
-  // Ambil Data User Aktif
   static Future<Map<String, String?>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? currentUsername = prefs.getString(_keyCurrentSession);
-    
-    if (currentUsername == null) {
-      return {'username': 'User', 'email': '', 'image': null};
-    }
-
+    if (currentUsername == null) return {'username': 'User', 'email': '', 'image': null};
     String? jsonString = prefs.getString(currentUsername);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
@@ -91,46 +65,31 @@ class UserService {
     return {};
   }
 
-  // Update Profile (Username & Foto)
   static Future<void> updateProfile({String? newUsername, String? newImagePath}) async {
     final prefs = await SharedPreferences.getInstance();
     String? oldUsername = prefs.getString(_keyCurrentSession);
     if (oldUsername == null) return;
-
-    // Ambil data lama
     String? jsonString = prefs.getString(oldUsername);
     if (jsonString == null) return;
     Map<String, dynamic> userData = jsonDecode(jsonString);
 
-    // Update Image
-    if (newImagePath != null) {
-      userData['image_path'] = newImagePath;
-    }
-
-    // Update Username (Migrasi Key)
+    if (newImagePath != null) userData['image_path'] = newImagePath;
     if (newUsername != null && newUsername != oldUsername) {
-      // Hapus key lama
       await prefs.remove(oldUsername);
-      // Simpan di key baru
       await prefs.setString(newUsername, jsonEncode(userData));
-      // Update session
       await prefs.setString(_keyCurrentSession, newUsername);
     } else {
-      // Username tidak berubah, update data di key lama
       await prefs.setString(oldUsername, jsonEncode(userData));
     }
   }
 
-  // Ganti Password
   static Future<bool> changePassword(String oldPass, String newPass) async {
     final prefs = await SharedPreferences.getInstance();
     String? currentUsername = prefs.getString(_keyCurrentSession);
     if (currentUsername == null) return false;
-
     String? jsonString = prefs.getString(currentUsername);
     if (jsonString == null) return false;
     Map<String, dynamic> userData = jsonDecode(jsonString);
-
     if (userData['password'] == oldPass) {
       userData['password'] = newPass;
       await prefs.setString(currentUsername, jsonEncode(userData));
@@ -139,31 +98,22 @@ class UserService {
     return false;
   }
 
-  // ==========================================
-  // 3. KUESIONER LOGIC
-  // ==========================================
-
-  // Cek apakah user baru pertama kali (belum isi kuesioner)
   static Future<bool> isFirstLogin() async {
     final prefs = await SharedPreferences.getInstance();
     String? currentUsername = prefs.getString(_keyCurrentSession);
     if (currentUsername == null) return false;
-
     String? jsonString = prefs.getString(currentUsername);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
-      // Jika key 'is_question_done' true, berarti BUKAN first login
       return userData['is_question_done'] != true; 
     }
     return false;
   }
 
-  // Tandai kuesioner selesai
   static Future<void> completeQuestionnaire() async {
     final prefs = await SharedPreferences.getInstance();
     String? currentUsername = prefs.getString(_keyCurrentSession);
     if (currentUsername == null) return;
-
     String? jsonString = prefs.getString(currentUsername);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
@@ -172,16 +122,10 @@ class UserService {
     }
   }
 
-  // ==========================================
-  // 4. WORKOUT PLAN & LOGS
-  // ==========================================
-
-  // Simpan Target Mingguan
   static Future<void> setWeeklyTarget(int days) async {
     final prefs = await SharedPreferences.getInstance();
     String? username = await _getCurrentUserKey();
     if (username == null) return;
-
     String? jsonString = prefs.getString(username);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
@@ -190,12 +134,10 @@ class UserService {
     }
   }
 
-  // Ambil Target Mingguan
   static Future<int> getWeeklyTarget() async {
     final prefs = await SharedPreferences.getInstance();
     String? username = await _getCurrentUserKey();
     if (username == null) return 3;
-
     String? jsonString = prefs.getString(username);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
@@ -204,23 +146,18 @@ class UserService {
     return 3;
   }
 
-  // Catat Latihan Hari Ini (Dipanggil saat finish workout)
   static Future<void> logWorkoutToday() async {
     final prefs = await SharedPreferences.getInstance();
     String? username = await _getCurrentUserKey();
     if (username == null) return;
-
     String? jsonString = prefs.getString(username);
     if (jsonString != null) {
       Map<String, dynamic> userData = jsonDecode(jsonString);
-      
-      // Ambil list log lama
-      List<String> logs = (userData['workout_logs'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-      
-      // Tanggal hari ini (YYYY-MM-DD)
-      String today = DateTime.now().toIso8601String().split('T')[0];
-
-      // Jika hari ini belum tercatat, tambahkan
+      List<String> logs = [];
+      if (userData['workout_logs'] != null) {
+        logs = List<String>.from(userData['workout_logs']);
+      }
+      String today = DateTime.now().toLocal().toIso8601String().split('T')[0];
       if (!logs.contains(today)) {
         logs.add(today);
         userData['workout_logs'] = logs;
@@ -229,13 +166,11 @@ class UserService {
     }
   }
 
-  // Hitung Progres Mingguan (Untuk Lingkaran di Home Page)
   static Future<Map<String, dynamic>> getWeeklyProgress() async {
     final prefs = await SharedPreferences.getInstance();
     String? username = await _getCurrentUserKey();
-    
     int target = 3;
-    List<int> completedDays = []; // List hari (1=Senin, 7=Minggu)
+    List<int> completedDays = [];
     int completedCount = 0;
 
     if (username != null) {
@@ -243,32 +178,129 @@ class UserService {
       if (jsonString != null) {
         Map<String, dynamic> userData = jsonDecode(jsonString);
         target = userData['weekly_target'] ?? 3;
+        List<String> logs = [];
+        if (userData['workout_logs'] != null) logs = List<String>.from(userData['workout_logs']);
         
-        List<String> logs = (userData['workout_logs'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
-        
-        // Filter log hanya untuk MINGGU INI
         DateTime now = DateTime.now();
-        // Cari hari Senin minggu ini
-        DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        startOfWeek = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day); // Reset jam
+        DateTime startOfWeek = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+        DateTime endOfWeek = startOfWeek.add(const Duration(days: 7));
 
         for (String logDate in logs) {
           DateTime date = DateTime.parse(logDate);
-          // Jika log >= Senin minggu ini
-          if (date.isAfter(startOfWeek.subtract(const Duration(seconds: 1)))) {
-            if (!completedDays.contains(date.weekday)) {
-              completedDays.add(date.weekday);
-            }
+          if ((date.isAfter(startOfWeek) || date.isAtSameMomentAs(startOfWeek)) && date.isBefore(endOfWeek)) {
+            if (!completedDays.contains(date.weekday)) completedDays.add(date.weekday);
           }
         }
         completedCount = completedDays.length;
       }
     }
+    return {'target': target, 'completed_count': completedCount, 'completed_days': completedDays};
+  }
 
-    return {
-      'target': target,
-      'completed_count': completedCount,
-      'completed_days': completedDays,
-    };
+
+  // ==========================================
+  // 5. NOTIFIKASI SETTINGS
+  // ==========================================
+
+  // Simpan Pengaturan Notifikasi
+  static Future<void> saveNotificationSettings({
+    required bool isEnabled,
+    required int hour,
+    required int minute,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? username = await _getCurrentUserKey();
+    if (username == null) return;
+
+    String? jsonString = prefs.getString(username);
+    if (jsonString != null) {
+      Map<String, dynamic> userData = jsonDecode(jsonString);
+      
+      // Simpan data notif ke JSON user
+      userData['notif_enabled'] = isEnabled;
+      userData['notif_hour'] = hour;
+      userData['notif_minute'] = minute;
+
+      await prefs.setString(username, jsonEncode(userData));
+    }
+  }
+
+  // Ambil Pengaturan Notifikasi
+  // Return: { 'enabled': bool, 'hour': int, 'minute': int }
+  static Future<Map<String, dynamic>> getNotificationSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? username = await _getCurrentUserKey();
+    
+    // Default values
+    bool enabled = false;
+    int hour = 19; // Default jam 7 malam
+    int minute = 0;
+
+    if (username != null) {
+      String? jsonString = prefs.getString(username);
+      if (jsonString != null) {
+        Map<String, dynamic> userData = jsonDecode(jsonString);
+        enabled = userData['notif_enabled'] ?? false;
+        hour = userData['notif_hour'] ?? 19;
+        minute = userData['notif_minute'] ?? 0;
+      }
+    }
+
+    return {'enabled': enabled, 'hour': hour, 'minute': minute};
+  }
+
+  // ==========================================
+  // FITUR BARU: HISTORI LATIHAN
+  // ==========================================
+
+  // Simpan Detail Latihan ke Histori
+  static Future<void> saveWorkoutHistory({
+    required String packageLevel,
+    required int exerciseCount,
+    required int calories,
+    required int durationSeconds,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? username = await _getCurrentUserKey();
+    if (username == null) return;
+
+    String? jsonString = prefs.getString(username);
+    if (jsonString != null) {
+      Map<String, dynamic> userData = jsonDecode(jsonString);
+      
+      // Ambil list history lama
+      List<dynamic> history = userData['workout_history'] ?? [];
+      
+      // Buat entry baru
+      Map<String, dynamic> newEntry = {
+        'date': DateTime.now().toIso8601String(), // Simpan tanggal lengkap dengan jam
+        'package': packageLevel,
+        'count': exerciseCount,
+        'calories': calories,
+        'duration': durationSeconds,
+      };
+      
+      // Tambahkan di awal list (biar paling baru di atas)
+      history.insert(0, newEntry);
+      
+      // Simpan balik
+      userData['workout_history'] = history;
+      await prefs.setString(username, jsonEncode(userData));
+    }
+  }
+
+  // Ambil List Histori
+  static Future<List<Map<String, dynamic>>> getWorkoutHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? username = await _getCurrentUserKey();
+    if (username == null) return [];
+
+    String? jsonString = prefs.getString(username);
+    if (jsonString != null) {
+      Map<String, dynamic> userData = jsonDecode(jsonString);
+      List<dynamic> history = userData['workout_history'] ?? [];
+      return List<Map<String, dynamic>>.from(history);
+    }
+    return [];
   }
 }

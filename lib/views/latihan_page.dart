@@ -133,8 +133,24 @@ class _LatihanPageState extends State<LatihanPage> {
     _endTime = DateTime.now();
     _disposeVideo();
     
-    // Simpan log latihan hari ini
+    // Hitung Statistik
+    final duration = _endTime!.difference(_startTime!).inSeconds;
+    int baseCal = 0;
+    if (paket.level == "Noob") baseCal = 5;
+    if (paket.level == "Pro") baseCal = 8;
+    if (paket.level == "Hacker") baseCal = 12;
+    final totalCalories = baseCal * paket.movements.length;
+
+    // 1. Simpan Log Harian (Untuk Api di Home)
     await UserService.logWorkoutToday();
+
+    // 2. Simpan Histori Detail (Untuk Capaian Saya) --- BARU ---
+    await UserService.saveWorkoutHistory(
+      packageLevel: paket.level,
+      exerciseCount: paket.movements.length,
+      calories: totalCalories,
+      durationSeconds: duration,
+    );
 
     if (mounted) {
       setState(() {
@@ -410,10 +426,10 @@ class _LatihanPageState extends State<LatihanPage> {
 
             // BAGIAN TENGAH (Timer)
             Text(
-              (isExercise && movement.type == 'repetisi') ? "Manual" : _formatTimer(_countdown),
+              (isExercise && movement.type == 'repetisi') ? "Semangat!" : _formatTimer(_countdown),
               style: TextStyle(
                 color: (isExercise && movement.type == 'repetisi') ? Colors.white24 : (_countdown <= 3 ? Colors.redAccent : Colors.white),
-                fontSize: 80,
+                fontSize: 50,
                 fontWeight: FontWeight.bold,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),

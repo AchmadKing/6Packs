@@ -3,9 +3,9 @@ import '../services/user_service.dart';
 
 // Pastikan import ini sesuai dengan struktur folder Anda
 import 'berat_tinggi_badan_page.dart';
-import 'rencana_page.dart';
 import 'seberapaaktif_page.dart';
 import 'tipe_badan_page.dart';
+// import 'rencana_page.dart'; // Tidak perlu di-import di list pages lagi
 
 class QuestionPage extends StatefulWidget {
   const QuestionPage({super.key});
@@ -17,12 +17,12 @@ class QuestionPage extends StatefulWidget {
 class _QuestionPageState extends State<QuestionPage> {
   int currentPagesIndex = 0;
 
-  // Daftar Halaman Kuesioner
+  // Daftar Halaman Kuesioner (HAPUS RencanaPage dari sini)
   final List<Widget> pages = [
     const TipeBadanPage(),
     const BeratTinggiBadanPage(),
     const SeberapaAktifPage(),
-    const RencanaPage(),
+    // const RencanaPage(), // Hapus ini
   ];
 
   // Judul Header per Halaman
@@ -30,12 +30,12 @@ class _QuestionPageState extends State<QuestionPage> {
     "Pilih Tipe Perut Anda",
     "Berat dan Tinggi Badan",
     "Seberapa Aktif Anda?",
-    "Rencana Latihan",
+    // "Rencana Latihan", // Hapus ini juga
   ];
 
   @override
   Widget build(BuildContext context) {
-    // Menghitung progress bar (0.25, 0.50, 0.75, 1.0)
+    // Menghitung progress bar (sekarang pembaginya berkurang 1)
     double progress = (currentPagesIndex + 1) / pages.length;
     bool isLastPage = currentPagesIndex == pages.length - 1;
 
@@ -65,12 +65,12 @@ class _QuestionPageState extends State<QuestionPage> {
             // Progress Bar Custom
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20), // Padding disesuaikan
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
                 height: 6,
                 child: Stack(
                   children: [
-                    // Track Putih (Background bar)
+                    // Track Putih
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -78,7 +78,7 @@ class _QuestionPageState extends State<QuestionPage> {
                       ),
                     ),
 
-                    // Progress Merah (Animated bar)
+                    // Progress Merah
                     AnimatedFractionallySizedBox(
                       duration: const Duration(milliseconds: 350),
                       curve: Curves.easeInOut,
@@ -96,14 +96,13 @@ class _QuestionPageState extends State<QuestionPage> {
             ),
           ],
         ),
-        // Tambahkan height agar AppBar muat menampung progress bar
         toolbarHeight: 80, 
       ),
 
-      // --- BODY (HALAMAN BERGANTI) ---
+      // --- BODY ---
       body: pages[currentPagesIndex],
 
-      // --- BOTTOM BAR (TOMBOL NEXT) ---
+      // --- BOTTOM BAR ---
       bottomNavigationBar: BottomAppBar(
         color: Colors.black,
         elevation: 0,
@@ -114,17 +113,16 @@ class _QuestionPageState extends State<QuestionPage> {
           child: ElevatedButton(
             onPressed: () async {
               if (isLastPage) {
-                // LOGIKA SELESAI
-                // 1. Tandai user sudah mengisi kuesioner
+                // LOGIKA SELESAI (Perubahan di sini)
+                
+                // 1. Tandai user sudah mengisi kuesioner dasar
                 await UserService.completeQuestionnaire();
 
                 if (context.mounted) {
-                  // 2. Pindah ke Halaman Utama dan hapus history
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/main', // Pastikan route ini sesuai dengan main.dart (MainPage)
-                    (Route<dynamic> route) => false,
-                  );
+                  // 2. Navigasi ke RencanaPage (Setup Terakhir)
+                  // Kita pakai pushNamed agar user masih dalam flow setup
+                  // Nanti di RencanaPage, tombol simpannya akan mengarah ke Home
+                  Navigator.pushNamed(context, '/rencana'); 
                 }
               } else {
                 // LOGIKA NEXT PAGE

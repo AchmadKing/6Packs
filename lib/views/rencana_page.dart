@@ -160,17 +160,24 @@ class _RencanaPageState extends State<RencanaPage> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () async {
-                      // 1. Hitung Target (Value 0-6 + 1 = Target 1-7)
-                      int target = _sliderValue.toInt() + 1;
-                      
-                      // 2. Simpan ke Shared Preferences
-                      await UserService.setWeeklyTarget(target);
+                    int target = _sliderValue.toInt() + 1;
+                    await UserService.setWeeklyTarget(target);
 
-                      // 3. Kembali ke Home dan beritahu ada perubahan (true)
-                      if (context.mounted) {
-                        Navigator.pop(context, true);
-                      }
-                    },
+                    if (context.mounted) {
+                      // Cek apakah bisa pop (artinya ini mode Edit dari Home)
+                      if (Navigator.canPop(context)) {
+                        // Cek apakah halaman sebelumnya adalah QuestionPage (Setup Awal)
+                        // Cara gampangnya: Langsung pushReplacement ke Main jika ini setup awal
+                        // Tapi agar aman untuk kedua kondisi (Edit & Setup), kita bisa pakai pushNamedAndRemoveUntil
+                        
+                        Navigator.pushNamedAndRemoveUntil(
+                          context, 
+                          '/main', 
+                          (route) => false // Hapus semua history, mulai fresh di Home
+                        );
+                      } 
+                    }
+                  },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF620000),
                       shape: RoundedRectangleBorder(

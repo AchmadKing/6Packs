@@ -13,6 +13,7 @@ import 'package:aplikasi_6packs/views/question_page.dart';
 import 'package:aplikasi_6packs/views/register_page.dart';
 import 'package:aplikasi_6packs/views/welcome_page.dart';
 import 'package:aplikasi_6packs/views/rencana_page.dart';
+import 'package:aplikasi_6packs/views/riwayat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -26,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false, // Menghilangkan banner debug
       title: 'Aplikasi 6Packs',
       theme: ThemeData(
         textTheme: GoogleFonts.interTextTheme(),
@@ -40,7 +41,12 @@ class MyApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/welcome': (context) => WelcomePage(),
         '/main': (context) => MainPage(),
+        
+        // --- TAMBAHAN PENTING ---
+        // Route ini yang dipanggil oleh tombol "Kembali ke Beranda"
         '/homepage': (context) => MainPage(), 
+        // ------------------------
+
         '/berita': (context) => BeritaPage(),
         '/daftar': (context) => RegisterPage(),
         '/pertanyaan': (context) => QuestionPage(),
@@ -55,6 +61,7 @@ class MyApp extends StatelessWidget {
         },
         '/latihan': (context) => LatihanPage(),
         '/rencana': (context) => const RencanaPage(),
+        '/riwayat': (context) => RiwayatPage(),
       },
       initialRoute: '/',
     );
