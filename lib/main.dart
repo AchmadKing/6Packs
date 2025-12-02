@@ -12,6 +12,8 @@ import 'package:aplikasi_6packs/views/password_page.dart';
 import 'package:aplikasi_6packs/views/question_page.dart';
 import 'package:aplikasi_6packs/views/register_page.dart';
 import 'package:aplikasi_6packs/views/welcome_page.dart';
+import 'package:aplikasi_6packs/views/rencana_page.dart';
+import 'package:aplikasi_6packs/views/riwayat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -22,11 +24,11 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false, // Menghilangkan banner debug
+      title: 'Aplikasi 6Packs',
       theme: ThemeData(
         textTheme: GoogleFonts.interTextTheme(),
         textSelectionTheme: const TextSelectionThemeData(
@@ -39,6 +41,12 @@ class MyApp extends StatelessWidget {
         '/': (context) => SplashScreen(),
         '/welcome': (context) => WelcomePage(),
         '/main': (context) => MainPage(),
+        
+        // --- TAMBAHAN PENTING ---
+        // Route ini yang dipanggil oleh tombol "Kembali ke Beranda"
+        '/homepage': (context) => MainPage(), 
+        // ------------------------
+
         '/berita': (context) => BeritaPage(),
         '/daftar': (context) => RegisterPage(),
         '/pertanyaan': (context) => QuestionPage(),
@@ -47,8 +55,13 @@ class MyApp extends StatelessWidget {
         '/edit-akun': (context) => EditAkunPage(),
         '/password': (context) => PasswordPage(),
         '/paket-latihan': (context) => PaketLatihanPage(),
-        '/detail-latihan': (context) => DetailLatihanPage(),
+        '/detail-latihan': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return DetailLatihanPage(paket: args["paket"]);
+        },
         '/latihan': (context) => LatihanPage(),
+        '/rencana': (context) => const RencanaPage(),
+        '/riwayat': (context) => RiwayatPage(),
       },
       initialRoute: '/',
     );

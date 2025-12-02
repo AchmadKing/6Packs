@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/paket_model.dart';
 
 class PaketLatihanPage extends StatefulWidget {
   const PaketLatihanPage({super.key});
@@ -101,8 +102,12 @@ class _PaketLatihanPageState extends State<PaketLatihanPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: (){
-                                Navigator.pushNamed(context, '/detail-latihan');
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/detail-latihan',
+                                  arguments: {"paket": workoutPackages[0]},
+                                );
                               }, 
                               style: ElevatedButton.styleFrom(
                                 shadowColor: Colors.transparent,
@@ -195,8 +200,12 @@ class _PaketLatihanPageState extends State<PaketLatihanPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: (){
-                                Navigator.pushNamed(context, '/paket-latihan');
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/detail-latihan',
+                                  arguments: {"paket": workoutPackages[1]},
+                                );
                               }, 
                               style: ElevatedButton.styleFrom(
                                 shadowColor: Colors.transparent,
@@ -307,9 +316,13 @@ class _PaketLatihanPageState extends State<PaketLatihanPage> {
                             width: double.infinity,
                             height: 50,
                             child: ElevatedButton(
-                              onPressed: (){
-                                Navigator.pushNamed(context, '/paket-latihan');
-                              }, 
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/detail-latihan',
+                                  arguments: {"paket": workoutPackages[2]},
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 shadowColor: Colors.transparent,
                                 elevation: 0,

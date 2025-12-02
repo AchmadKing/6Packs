@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/user_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -8,6 +9,19 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  // Controller untuk menangkap input user
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,14 +32,14 @@ class _RegisterPageState extends State<RegisterPage> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        title: Text("Daftar", style: TextStyle(fontSize: 15)),
+        title: const Text("Daftar", style: TextStyle(fontSize: 15)),
       ),
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.07),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(60),
             topRight: Radius.circular(60),
           ),
@@ -34,24 +48,24 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 70),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 70),
               child: Column(
-                spacing: 40,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                // Jika error "spacing" tidak dikenali (di flutter lama), ganti dengan SizedBox antar widget
                 children: [
+                  // --- INPUT USERNAME ---
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 10,
                     children: [
-                      Text(
+                      const Text(
                         "Username",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 50,
                         child: TextFormField(
+                          controller: _usernameController,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.02),
@@ -67,12 +81,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.04),
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white.withOpacity(0.04),
@@ -80,23 +88,27 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 40),
+
+                  // --- INPUT EMAIL ---
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 10,
                     children: [
-                      Text(
+                      const Text(
                         "Email",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 50,
                         child: TextFormField(
+                          controller: _emailController,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.02),
@@ -112,12 +124,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.04),
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white.withOpacity(0.04),
@@ -125,23 +131,27 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 40),
+
+                  // --- INPUT PASSWORD ---
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 10,
                     children: [
-                      Text(
+                      const Text(
                         "Password",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 50,
                         child: TextFormField(
+                          controller: _passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             filled: true,
@@ -158,12 +168,6 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.04),
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white.withOpacity(0.04),
@@ -171,24 +175,76 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ],
                   ),
-                  Container(
+                  const SizedBox(height: 40),
+
+                  // --- TOMBOL DAFTAR ---
+                  SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/pertanyaan');
+                      onPressed: () async {
+                        final user = _usernameController.text;
+                        final email = _emailController.text;
+                        final pass = _passwordController.text;
+
+                        // 1. Validasi Input Kosong
+                        if (user.isNotEmpty && email.isNotEmpty && pass.isNotEmpty) {
+                          
+                          // 2. Cek apakah Username/Email sudah terpakai
+                          bool exists = await UserService.checkUserExists(user, email);
+
+                          if (!context.mounted) return;
+
+                          if (exists) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Username atau Email sudah digunakan!"),
+                                backgroundColor: Colors.red,
+                              )
+                            );
+                          } else {
+                            // 3. Register User Baru
+                            await UserService.register(user, email, pass);
+
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Akun berhasil dibuat!"),
+                                  backgroundColor: Colors.green,
+                                )
+                              );
+                              
+                              // 4. Redirect LANGSUNG ke Question Page (Skip Login)
+                              // Hapus history agar tidak bisa back ke Register
+                              Navigator.pushNamedAndRemoveUntil(
+                                context, 
+                                '/pertanyaan', 
+                                (route) => false
+                              );
+                            }
+                          }
+                        } else {
+                           if (context.mounted) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Semua data wajib diisi"),
+                                  backgroundColor: Colors.orange,
+                                )
+                              );
+                           }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         shadowColor: Colors.transparent,
                         elevation: 0,
-                        backgroundColor: Color(0xFF620000),
+                        backgroundColor: const Color(0xFF620000),
                       ),
-                      child: Text(
+                      child: const Text(
                         "Buat Akun Baru",
                         style: TextStyle(
                           color: Colors.white,
@@ -197,18 +253,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                   ),
+                  
+                  const SizedBox(height: 10),
+                  
+                  // --- LINK KE LOGIN ---
                   Row(
-                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        "Sudah Punya Akun?",
+                      const Text(
+                        "Sudah Punya Akun? ",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                       GestureDetector(
                         onTap: () {
                           Navigator.pushReplacementNamed(context, '/masuk');
                         },
-                        child: Text(
+                        child: const Text(
                           "Masuk Disini",
                           style: TextStyle(
                             color: Color(0xFFE40000),

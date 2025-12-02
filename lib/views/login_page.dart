@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/user_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -8,6 +9,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Controller untuk menangkap input
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        title: Text("Masuk", style: TextStyle(fontSize: 15)),
+        title: const Text("Masuk", style: TextStyle(fontSize: 15)),
       ),
       body: Container(
         width: double.infinity,
@@ -26,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.07),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(60),
             topRight: Radius.circular(60),
           ),
@@ -35,24 +47,25 @@ class _LoginPageState extends State<LoginPage> {
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 70),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 70),
               child: Column(
-                spacing: 40,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                // Gunakan SizedBox untuk spacing jika properti spacing belum support di versi flutter anda
                 children: [
+                  
+                  // --- INPUT USERNAME ---
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 10,
                     children: [
-                      Text(
+                      const Text(
                         "Username",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 50,
                         child: TextFormField(
+                          controller: _usernameController,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.02),
@@ -68,12 +81,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.04),
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white.withOpacity(0.04),
@@ -81,23 +88,27 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 40),
+
+                  // --- INPUT PASSWORD ---
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 10,
                     children: [
-                      Text(
+                      const Text(
                         "Password",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 50,
                         child: TextFormField(
+                          controller: _passwordController,
                           obscureText: true,
                           decoration: InputDecoration(
                             filled: true,
@@ -114,12 +125,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            disabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.white.withOpacity(0.04),
-                              ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white.withOpacity(0.04),
@@ -127,24 +132,59 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
                         ),
                       ),
                     ],
                   ),
-                  Container(
+                  const SizedBox(height: 40),
+
+                  // --- TOMBOL MASUK ---
+                  SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/main');
+                      onPressed: () async {
+                        final username = _usernameController.text;
+                        final password = _passwordController.text;
+
+                        // 1. Validasi Input
+                        if (username.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Username dan Password harus diisi"),
+                              backgroundColor: Colors.orange,
+                            )
+                          );
+                          return;
+                        }
+
+                        // 2. Cek Login via Service
+                        bool isSuccess = await UserService.login(username, password);
+
+                        if (context.mounted) {
+                          if (isSuccess) {
+                            // 3. Login Berhasil -> Masuk ke Main Page (Dashboard)
+                            // Menggunakan pushNamedAndRemoveUntil agar tidak bisa back ke Login
+                            // Pastikan '/main' mengarah ke MainPage() di main.dart
+                            Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+                          } else {
+                            // 4. Login Gagal
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Username atau Password salah!"),
+                                backgroundColor: Colors.red,
+                              )
+                            );
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         shadowColor: Colors.transparent,
                         elevation: 0,
-                        backgroundColor: Color(0xFF620000),
+                        backgroundColor: const Color(0xFF620000),
                       ),
-                      child: Text(
+                      child: const Text(
                         "Masuk",
                         style: TextStyle(
                           color: Colors.white,
@@ -153,18 +193,23 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
+                  
+                  const SizedBox(height: 10),
+                  
+                  // --- LINK DAFTAR ---
                   Row(
-                    spacing: 10,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        "Belum Punya Akun?",
+                      const Text(
+                        "Belum Punya Akun? ",
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                       GestureDetector(
                         onTap: () {
+                          // Pindah ke halaman Register
                           Navigator.pushReplacementNamed(context, '/daftar');
                         },
-                        child: Text(
+                        child: const Text(
                           "Daftar Disini",
                           style: TextStyle(
                             color: Color(0xFFE40000),
