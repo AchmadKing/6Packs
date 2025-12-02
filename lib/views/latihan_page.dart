@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:ui'; // Diperlukan untuk FontFeature
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+
+// Import Models & Services
 import '../models/paket_model.dart';
 import '../services/workout_api.dart';
+import '../services/user_service.dart'; // Jangan lupa import ini!
 
+// Enum untuk status halaman
 enum WorkoutPhase { prep, exercise, rest, finished }
 
 class LatihanPage extends StatefulWidget {
@@ -25,7 +30,7 @@ class _LatihanPageState extends State<LatihanPage> {
 
   // --- TIMER ---
   Timer? _timer;
-  int _countdown = 30;
+  int _countdown = 10; // Default awal
 
   // --- DURASI TOTAL ---
   DateTime? _startTime;
@@ -44,7 +49,7 @@ class _LatihanPageState extends State<LatihanPage> {
       final args = ModalRoute.of(context)!.settings.arguments as Map;
       paket = args["paket"] as WorkoutPackage;
 
-      _startTime = DateTime.now();
+      _startTime = DateTime.now(); 
       _startPrep();
       _isInit = true;
     }
@@ -64,7 +69,7 @@ class _LatihanPageState extends State<LatihanPage> {
   void _startPrep() {
     setState(() {
       _phase = WorkoutPhase.prep;
-      _countdown = 10; // Persiapan cukup 10 detik
+      _countdown = 10;
       _isPaused = false;
     });
     _startTimer(onFinished: _startNextExercise);
@@ -82,14 +87,12 @@ class _LatihanPageState extends State<LatihanPage> {
 
     final movement = paket.movements[_exerciseIndex];
 
-    // Load Video
     await _loadVideoFromApi(movement.name);
 
     setState(() {
       _isLoadingVideo = false;
     });
 
-    // Jika tipe latihan "detik", mulai countdown
     if (movement.type == 'detik') {
       setState(() {
         _countdown = movement.amount;
@@ -113,7 +116,7 @@ class _LatihanPageState extends State<LatihanPage> {
 
     setState(() {
       _phase = WorkoutPhase.rest;
-      _countdown = 30; // Istirahat 30 detik
+      _countdown = 30;
       _isPaused = false;
     });
 
@@ -125,21 +128,28 @@ class _LatihanPageState extends State<LatihanPage> {
     });
   }
 
-  void _finishWorkout() {
+  // PERBAIKAN LOGIC FINISH
+  Future<void> _finishWorkout() async {
     _endTime = DateTime.now();
     _disposeVideo();
-    setState(() {
-      _phase = WorkoutPhase.finished;
-    });
+    
+    // Simpan log latihan hari ini
+    await UserService.logWorkoutToday();
+
+    if (mounted) {
+      setState(() {
+        _phase = WorkoutPhase.finished;
+      });
+    }
   }
 
   // ==========================================
-  // LOGIKA TIMER & PAUSE
+  // LOGIKA TIMER
   // ==========================================
 
   void _startTimer({required VoidCallback onFinished}) {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_isPaused) return; // Jika pause, timer tidak berkurang
+      if (_isPaused) return;
 
       if (_countdown <= 0) {
         timer.cancel();
@@ -177,6 +187,10 @@ class _LatihanPageState extends State<LatihanPage> {
     }
   }
 
+  // ==========================================
+  // VIDEO CONTROLLER
+  // ==========================================
+
   void _disposeVideo() {
     _videoController?.dispose();
     _videoController = null;
@@ -212,6 +226,9 @@ class _LatihanPageState extends State<LatihanPage> {
     }
   }
 
+  // ==========================================
+  // FORMATTING
+  // ==========================================
 
   String _formatTimer(int totalSeconds) {
     int m = totalSeconds ~/ 60;
@@ -219,12 +236,18 @@ class _LatihanPageState extends State<LatihanPage> {
     return "${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}";
   }
 
-  String _formatDuration(int totalSeconds) {
+  String _formatTotalDuration(int totalSeconds) {
     int m = totalSeconds ~/ 60;
     int s = totalSeconds % 60;
-    return "${m}m ${s}s";
+    if (m > 0) {
+      return "$m menit $s detik";
+    }
+    return "$s detik";
   }
 
+  // ==========================================
+  // UI BUILDER
+  // ==========================================
 
   @override
   Widget build(BuildContext context) {
@@ -234,8 +257,8 @@ class _LatihanPageState extends State<LatihanPage> {
 
     final movement = paket.movements[_exerciseIndex];
     final bool isExercise = _phase == WorkoutPhase.exercise;
-    final String titleText =
-        isExercise ? movement.name : (_phase == WorkoutPhase.rest ? "ISTIRAHAT" : "PERSIAPAN");
+    final bool isTimedExercise = isExercise && movement.type == 'detik';
+    final String titleText = isExercise ? movement.name : (_phase == WorkoutPhase.rest ? "ISTIRAHAT" : "PERSIAPAN");
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -248,8 +271,6 @@ class _LatihanPageState extends State<LatihanPage> {
         centerTitle: true,
         title: Column(
           mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               paket.level,
@@ -297,35 +318,28 @@ class _LatihanPageState extends State<LatihanPage> {
             );
           },
         ),
-        actions: const [
-          SizedBox(width: kToolbarHeight),
-        ],
+        actions: const [SizedBox(width: kToolbarHeight)],
       ),
+
       body: Container(
         width: double.infinity,
         height: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // --- BAGIAN ATAS (Progress & Video) ---
+            // BAGIAN ATAS
             Column(
               spacing: 20,
               children: [
-                // 1. Progress Indicator
+                // Progress Bar
                 Column(
                   spacing: 10,
                   children: [
                     Text(
                       "${_exerciseIndex + 1} dari ${paket.movements.length}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
-                    // Progress Bar Garis-garis
                     Row(
                       children: List.generate(paket.movements.length, (index) {
                         return Expanded(
@@ -333,10 +347,7 @@ class _LatihanPageState extends State<LatihanPage> {
                             height: 4,
                             margin: const EdgeInsets.symmetric(horizontal: 2),
                             decoration: BoxDecoration(
-                              // Putih untuk yang sudah/sedang, Abu untuk yang belum
-                              color: index <= _exerciseIndex
-                                  ? Colors.white
-                                  : Colors.white24,
+                              color: index <= _exerciseIndex ? Colors.white : Colors.white24,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -346,34 +357,23 @@ class _LatihanPageState extends State<LatihanPage> {
                   ],
                 ),
 
-                // 2. Judul & Icon Info
+                // Judul
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: Text(
                         titleText,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24, // Sedikit lebih besar
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {
-                        // Fitur tambahan: Info gerakan (bisa diisi nanti)
-                      },
-                      icon: const Icon(Icons.info_outline,
-                          color: Colors.amber, size: 24),
-                    )
+                    const Icon(Icons.info_outline, color: Colors.amber, size: 24),
                   ],
                 ),
 
-                // 3. Video Player Container
+                // Video
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: AspectRatio(
@@ -382,33 +382,17 @@ class _LatihanPageState extends State<LatihanPage> {
                       color: Colors.grey[900],
                       child: isExercise
                           ? (_isLoadingVideo
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white))
+                              ? const Center(child: CircularProgressIndicator(color: Colors.white))
                               : _isVideoInitialized
                                   ? VideoPlayer(_videoController!)
-                                  : const Center(
-                                      child: Icon(Icons.videocam_off,
-                                          color: Colors.white54, size: 40)))
+                                  : const Center(child: Icon(Icons.videocam_off, color: Colors.white54, size: 40)))
                           : Center(
-                              // Tampilan saat Istirahat/Prep (Tanpa Video)
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    _phase == WorkoutPhase.rest
-                                        ? Icons.self_improvement
-                                        : Icons.accessibility_new,
-                                    color: Colors.white24,
-                                    size: 50,
-                                  ),
+                                  Icon(_phase == WorkoutPhase.rest ? Icons.self_improvement : Icons.accessibility_new, color: Colors.white24, size: 50),
                                   const SizedBox(height: 10),
-                                  Text(
-                                    _phase == WorkoutPhase.rest
-                                        ? "Ambil Nafas..."
-                                        : "Siap-siap!",
-                                    style: const TextStyle(color: Colors.white54),
-                                  )
+                                  Text(_phase == WorkoutPhase.rest ? "Ambil Nafas..." : "Siap-siap!", style: const TextStyle(color: Colors.white54))
                                 ],
                               ),
                             ),
@@ -416,97 +400,58 @@ class _LatihanPageState extends State<LatihanPage> {
                   ),
                 ),
 
-                // 4. Deskripsi Singkat (Repetisi / Info)
+                // Deskripsi
                 if (isExercise && movement.type == 'repetisi')
-                  Text(
-                    "Lakukan ${movement.amount} Repetisi",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                
+                  Text("Lakukan ${movement.amount} Repetisi", textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.w500)),
                 if (_phase == WorkoutPhase.rest)
-                   Text(
-                    "Selanjutnya: ${paket.movements[_exerciseIndex+1].name}",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white54),
-                   )
+                   Text("Selanjutnya: ${paket.movements[_exerciseIndex+1].name}", textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54)),
               ],
             ),
 
-            // --- BAGIAN TENGAH (Timer Besar) ---
+            // BAGIAN TENGAH (Timer)
             Text(
-              // Tampilkan Timer jika tipe 'detik' atau sedang istirahat/prep
-              (isExercise && movement.type == 'repetisi')
-                  ? "Manual" // Jika repetisi, tidak ada timer
-                  : _formatTimer(_countdown),
+              (isExercise && movement.type == 'repetisi') ? "Manual" : _formatTimer(_countdown),
               style: TextStyle(
-                color: (isExercise && movement.type == 'repetisi') 
-                    ? Colors.white24 
-                    : (_countdown <= 3 ? Colors.redAccent : Colors.white),
-                fontSize: 80, // Ukuran Besar sesuai request
+                color: (isExercise && movement.type == 'repetisi') ? Colors.white24 : (_countdown <= 3 ? Colors.redAccent : Colors.white),
+                fontSize: 80,
                 fontWeight: FontWeight.bold,
-                fontFeatures: const [FontFeature.tabularFigures()], // Agar angka tidak goyang
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
 
-            // --- BAGIAN BAWAH (Tombol) ---
+            // BAGIAN BAWAH (Kontrol)
             Column(
               spacing: 15,
               children: [
-                // Tombol Pause / Resume
-                if (_phase != WorkoutPhase.prep) // Prep tidak perlu pause
+                if (_phase != WorkoutPhase.prep)
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
                       onPressed: _togglePause,
                       style: ElevatedButton.styleFrom(
-                        shadowColor: Colors.transparent,
-                        elevation: 0,
-                        backgroundColor: const Color(0xFF620000), // Merah Gelap
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+                        backgroundColor: const Color(0xFF620000),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
-                      child: Text(
-                        _isPaused ? "Resume" : "Pause",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
-                      ),
+                      child: Text(_isPaused ? "Resume" : "Pause", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                     ),
                   ),
 
-                // Tombol Skip / Selesai
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: _skipCurrentPhase,
-                    style: ElevatedButton.styleFrom(
-                      shadowColor: Colors.transparent,
-                      elevation: 0,
-                      backgroundColor: Colors.white, // Putih
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                if (!isTimedExercise)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _skipCurrentPhase,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
+                      child: Text(isExercise ? "Selesai / Lanjut" : "Skip", style: const TextStyle(color: Color(0xFF620000), fontWeight: FontWeight.w700, fontSize: 16)),
                     ),
-                    child: Text(
-                      isExercise ? "Selesai / Lanjut" : "Skip",
-                      style: const TextStyle(
-                        color: Color(0xFF620000), // Teks Merah Gelap
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
+                  )
+                else
+                  const SizedBox(height: 55),
               ],
             )
           ],
@@ -515,6 +460,9 @@ class _LatihanPageState extends State<LatihanPage> {
     );
   }
 
+  // ==========================================
+  // VIEW FINISHED (PERBAIKAN NAVIGASI)
+  // ==========================================
   Widget _buildFinishedView() {
     final duration = _endTime!.difference(_startTime!).inSeconds;
     
@@ -536,10 +484,7 @@ class _LatihanPageState extends State<LatihanPage> {
             const SizedBox(height: 20),
             Text(
               "SELAMAT!",
-              style: TextStyle(
-                  color: Colors.blue[400],
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.blue[400], fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Text(
@@ -548,7 +493,6 @@ class _LatihanPageState extends State<LatihanPage> {
             ),
             const SizedBox(height: 50),
             
-            // Statistik
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -562,7 +506,7 @@ class _LatihanPageState extends State<LatihanPage> {
                   Container(width: 1, height: 40, color: Colors.white24),
                   _buildStatItem("$totalCalories", "Kkal"),
                   Container(width: 1, height: 40, color: Colors.white24),
-                  _buildStatItem(_formatDuration(duration), "Waktu"),
+                  _buildStatItem(_formatTotalDuration(duration), "Waktu"),
                 ],
               ),
             ),
@@ -574,17 +518,14 @@ class _LatihanPageState extends State<LatihanPage> {
               height: 55,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, '/homepage', (route) => false);
+                  // PERBAIKAN: Gunakan pushNamedAndRemoveUntil agar tumpukan history bersih
+                  Navigator.pushNamedAndRemoveUntil(context, '/homepage', (route) => false);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0089CE),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
-                child: const Text("Kembali ke Beranda",
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text("Kembali ke Beranda", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -596,14 +537,9 @@ class _LatihanPageState extends State<LatihanPage> {
   Widget _buildStatItem(String value, String label) {
     return Column(
       children: [
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold)),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        Text(label,
-            style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/user_service.dart';
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -8,6 +9,9 @@ class PasswordPage extends StatefulWidget {
 }
 
 class _PasswordPageState extends State<PasswordPage> {
+  final TextEditingController _oldPassController = TextEditingController();
+  final TextEditingController _newPassController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,17 +22,16 @@ class _PasswordPageState extends State<PasswordPage> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        title: Text("Ganti Password", style: TextStyle(fontSize: 15)),
+        title: const Text("Ganti Password", style: TextStyle(fontSize: 15)),
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.all(30),
+          padding: const EdgeInsets.all(30),
           child: Column(
-            spacing: 20,
             children: [
               Column(
                 children: [
-                  Text(
+                  const Text(
                     "Perbarui Password Anda",
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -37,6 +40,7 @@ class _PasswordPageState extends State<PasswordPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 10),
                   Text(
                     "Masukkan password yang sudah ada dan password yang baru",
                     textAlign: TextAlign.center,
@@ -48,19 +52,20 @@ class _PasswordPageState extends State<PasswordPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 20), // diperbaiki spacing
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 10,
                 children: [
-                  Text(
+                  const Text(
                     "Password Saat Ini",
                     style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
+                  const SizedBox(height: 10),
                   SizedBox(
                     height: 50,
                     child: TextFormField(
+                      controller: _oldPassController, // LOGIC
                       obscureText: true,
                       decoration: InputDecoration(
                         filled: true,
@@ -90,23 +95,25 @@ class _PasswordPageState extends State<PasswordPage> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 10,
                 children: [
-                  Text(
+                  const Text(
                     "Password Baru",
                     style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
+                  const SizedBox(height: 10),
                   SizedBox(
                     height: 50,
                     child: TextFormField(
+                      controller: _newPassController, // LOGIC
                       obscureText: true,
                       decoration: InputDecoration(
                         filled: true,
@@ -136,23 +143,44 @@ class _PasswordPageState extends State<PasswordPage> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 5),
-              Container(
+              const SizedBox(height: 30),
+              SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    // --- LOGIKA GANTI PASS ---
+                    if (_oldPassController.text.isEmpty || _newPassController.text.isEmpty) return;
+
+                    bool success = await UserService.changePassword(
+                      _oldPassController.text, 
+                      _newPassController.text
+                    );
+
+                    if (context.mounted) {
+                      if (success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Password berhasil diganti!"))
+                        );
+                        Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Password lama salah!"))
+                        );
+                      }
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     shadowColor: Colors.transparent,
                     elevation: 0,
-                    backgroundColor: Color(0xFF620000),
+                    backgroundColor: const Color(0xFF620000),
                   ),
-                  child: Text(
+                  child: const Text(
                     "Ganti Password",
                     style: TextStyle(
                       color: Colors.white,

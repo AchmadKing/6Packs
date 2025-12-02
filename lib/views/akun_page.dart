@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/user_service.dart';
 
 class AkunPage extends StatefulWidget {
   const AkunPage({super.key});
@@ -8,6 +10,25 @@ class AkunPage extends StatefulWidget {
 }
 
 class _AkunPageState extends State<AkunPage> {
+  String username = "User";
+  String email = "email@email.com";
+  String? imagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    final data = await UserService.getUserData();
+    setState(() {
+      username = data['username'] ?? "User";
+      email = data['email'] ?? "email";
+      imagePath = data['image'];
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,17 +40,16 @@ class _AkunPageState extends State<AkunPage> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        title: Text("Profil Saya", style: TextStyle(fontSize: 15)),
+        title: const Text("Profil Saya", style: TextStyle(fontSize: 15)),
       ),
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.all(30),
+          padding: const EdgeInsets.all(30),
           child: Column(
-            spacing: 20,
             children: [
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.07),
                   borderRadius: BorderRadius.circular(10),
@@ -39,30 +59,38 @@ class _AkunPageState extends State<AkunPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Row(
-                      spacing: 15,
                       children: [
+                        // --- FOTO PROFIL ---
                         Container(
                           width: 50,
                           height: 50,
+                          margin: const EdgeInsets.only(right: 15),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
+                            image: imagePath != null 
+                                ? DecorationImage(
+                                    image: FileImage(File(imagePath!)),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
                         ),
+                        // --- NAMA & EMAIL ---
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Username",
-                              style: TextStyle(
+                              username,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
-                              "email@email.com",
-                              style: TextStyle(
+                              email,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
@@ -72,21 +100,29 @@ class _AkunPageState extends State<AkunPage> {
                         ),
                       ],
                     ),
+                    // --- TOMBOL EDIT ---
                     IconButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/edit-akun');
+                      onPressed: () async {
+                        // Tunggu hasil dari halaman edit
+                        final result = await Navigator.pushNamed(context, '/edit-akun');
+                        // Jika ada perubahan (true), refresh halaman ini
+                        if (result == true) {
+                          _loadUserData();
+                        }
                       },
-                      icon: Icon(Icons.edit_outlined, color: Colors.white),
+                      icon: const Icon(Icons.edit_outlined, color: Colors.white),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 20),
+              
+              // --- MENU GENERAL ---
               Column(
-                spacing: 20,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "General",
                     style: TextStyle(
                       fontSize: 16,
@@ -94,91 +130,37 @@ class _AkunPageState extends State<AkunPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  const SizedBox(height: 20),
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
-                      spacing: 20,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              spacing: 20,
-                              children: [
-                                Icon(Icons.person_outline, color: Colors.white),
-                                Text(
-                                  "Capaian Saya",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.white),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              spacing: 20,
-                              children: [
-                                Icon(
-                                  Icons.notifications_outlined,
-                                  color: Colors.white,
-                                ),
-                                Text(
-                                  "Notifikasi",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.white),
-                          ],
-                        ),
-                        GestureDetector(
+                        _buildMenuItem(Icons.person_outline, "Capaian Saya"),
+                        const SizedBox(height: 20),
+                        _buildMenuItem(Icons.notifications_outlined, "Notifikasi"),
+                        const SizedBox(height: 20),
+                        // Menu Ganti Password
+                        InkWell(
                           onTap: () {
                             Navigator.pushNamed(context, '/password');
                           },
-                          child: Container(
-                            width: double.infinity,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Row(
-                                  spacing: 20,
-                                  children: [
-                                    Icon(
-                                      Icons.lock_outline_rounded,
-                                      color: Colors.white,
-                                    ),
-                                    Text(
-                                      "Ganti Password",
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Icon(Icons.chevron_right, color: Colors.white),
-                              ],
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.lock_outline_rounded, color: Colors.white),
+                                  const SizedBox(width: 20),
+                                  const Text("Ganti Password", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.w700)),
+                                ],
+                              ),
+                              const Icon(Icons.chevron_right, color: Colors.white),
+                            ],
                           ),
                         ),
                       ],
@@ -186,12 +168,13 @@ class _AkunPageState extends State<AkunPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+
+              // --- MENU SUPPORT ---
               Column(
-                spacing: 20,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "Support",
                     style: TextStyle(
                       fontSize: 16,
@@ -199,66 +182,27 @@ class _AkunPageState extends State<AkunPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  const SizedBox(height: 20),
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
-                      spacing: 20,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              spacing: 20,
-                              children: [
-                                Icon(
-                                  Icons.question_answer,
-                                  color: Colors.white,
-                                ),
-                                Text(
-                                  "FAQ",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.white),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Row(
-                              spacing: 20,
-                              children: [
-                                Icon(Icons.share_outlined, color: Colors.white),
-                                Text(
-                                  "Bagikan",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.white),
-                          ],
-                        ),
+                        _buildMenuItem(Icons.question_answer, "FAQ"),
+                        const SizedBox(height: 20),
+                        _buildMenuItem(Icons.share_outlined, "Bagikan"),
                       ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+
+              // --- TOMBOL LOGOUT ---
               Ink(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -266,16 +210,17 @@ class _AkunPageState extends State<AkunPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: () {
+                    // Logika Logout: Kembali ke Login, hapus stack
+                    Navigator.pushNamedAndRemoveUntil(context, '/masuk', (route) => false);
+                  },
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Row(
-                      spacing: 20,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
+                      children: const [
                         Icon(Icons.logout, color: Color(0xFFFF4040)),
+                        SizedBox(width: 20),
                         Text(
                           "Log Out",
                           style: TextStyle(
@@ -293,6 +238,30 @@ class _AkunPageState extends State<AkunPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMenuItem(IconData icon, String title) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 20),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const Icon(Icons.chevron_right, color: Colors.white),
+      ],
     );
   }
 }
